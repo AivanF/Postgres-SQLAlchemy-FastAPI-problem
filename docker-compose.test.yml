@@ -1,0 +1,31 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    depends_on:
+      - rdb
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@rdb:5432/app_db
+    ports:
+      - '4321:4321'
+    command: pytest tests.py
+
+  rdb:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=app_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  db:
+    driver: local
